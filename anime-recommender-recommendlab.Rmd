@@ -1,0 +1,50 @@
+---
+title: "Anime Recommender"
+output: html_notebook
+---
+
+# Data Input
+We will be constructing a recommendation algorithm using the library recommenderlab so we import that. We also need dplyr so we can play around with its data wrangling function in post production.
+```{r}
+library(recommenderlab) # For the recommendation algorithm
+library(dplyr) # For ease of dataframe manipulation
+```
+Let's set up the path so we won't need to rewrite it for every singe csv file.
+```{r}
+path <- '../input/anime-recommendation-database-2020/'
+
+list.files(path)
+```
+For the recommendation algorithm we will need the complete rating data to set up the model as well as the anime dataset so we can identify what Anime ID the user enjoys/would enjoy.
+```{r}
+anime <- read.csv(paste(path, 'anime.csv', sep = ''))
+rating_complete <- read.csv(paste(path, 'rating_complete.csv', sep = ''))
+```
+Next we must set up the Rating matrix. This is done by turning the data.frame into a real rating matrix. Afterwards all users with an amount of reviews less than or equal to 200 are stripped from the matrix since the matrix would be considered too sparse otherwise.
+```{r}
+ratingmat_init <- as(rating_complete, "realRatingMatrix") 
+ratingmat <- ratingmat_init[rowCounts(ratingmat_init) > 200,] %>% normalize()
+```
+Now we can set up the recommender itself using the rating matrix. The amount of nearest neighbors is currently set to 10 in order to save on computation time.
+```{r}
+recModel <- Recommender(ratingmat, method = "UBCF", param = list(method = "Cosine", nn = 10))
+```
+Now we can create a top 10 list using the recommender model to predict the top 10 recommendations for the first person.
+```{r}
+top10 <- predict(recModel, ratingmat[1], n=10)
+top10
+```
+Afterwards the top 10 list is manipulated so the anime ID can be turned into the actual names.
+```{r}
+top10list <- as(top10, "list")
+
+top10df <- data.frame(top10list)
+
+colnames(top10df) <- "MAL_ID"
+
+top10df$MAL_ID <- as.numeric(top10df$MAL_ID)
+
+
+left_join(top10df, anime[1:4], by="MAL_ID")
+```
+

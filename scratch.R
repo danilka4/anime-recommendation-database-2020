@@ -6,9 +6,9 @@ path <- '../input/anime-recommendation-database-2020/'
 
 list.files(path)
 
-anime <- read.csv(paste(path, 'anime.csv', sep = ''))
 # anime_with_synopsis <- read.csv(paste(path, 'anime_with_synopsis.csv', sep = ''))
 # animelist <- read.csv(paste(path, 'animelist.csv', sep = ''))
+anime <- read.csv(paste(path, 'anime.csv', sep = ''))
 rating_complete <- read.csv(paste(path, 'rating_complete.csv', sep = ''))
 # watching_status <- read.csv(paste(path, 'watching_status.csv', sep = ''))
 
@@ -59,9 +59,6 @@ top5df <- data.frame(top5list)
 colnames(top5df) <- "MAL_ID"
 
 top5df$MAL_ID <- as.numeric(top5df$MAL_ID)
-
-
-library(dplyr)
 
 
 left_join(top5df, anime[1:4], by="MAL_ID")
@@ -120,10 +117,10 @@ ratingmat_tim <- ratingmat_tim[c(rowCounts(ratingmat_tim) >= 200, dim(ratingmat_
 
 
 
-recModel_tim <- Recommender(ratingmat_tim, method = "UBCF", param = list(method = "Cosine", nn = 10))
+recModel_tim <- Recommender(ratingmat_tim, method = "UBCF", param = list(method = "Cosine", nn = 20))
 
 
-tim_list <- as(predict(recModel_tim, tail(ratingmat_tim, n=1)), "list")
+tim_list <- as(predict(recModel_tim, tail(ratingmat_tim, n=1), n = 200), "list")
 
 tim_df <- data.frame(tim_list)
 
@@ -135,7 +132,7 @@ tim_df$MAL_ID <- as.numeric(tim_df$MAL_ID)
 library(dplyr)
 
 
-left_join(tim_df, anime[1:4], by="MAL_ID")
+left_join(tim_df, anime[1:4], by="MAL_ID")[,2:4]
 
 
 
@@ -157,10 +154,10 @@ ratingmat_gema <- ratingmat_gema[c(rowCounts(ratingmat_gema) >= 200, dim(ratingm
 
 
 
-recModel_gema <- Recommender(ratingmat_gema, method = "UBCF", param = list(method = "Cosine", nn = 10))
+recModel_gema <- Recommender(ratingmat_gema, method = "UBCF", param = list(method = "Cosine", nn = 20))
 
 
-gema_list <- as(predict(recModel_gema, tail(ratingmat_gema, n=1)), "list")
+gema_list <- as(predict(recModel_gema, tail(ratingmat_gema, n=1), n=200), "list")
 
 gema_df <- data.frame(gema_list)
 
