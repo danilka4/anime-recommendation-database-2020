@@ -48,3 +48,76 @@ top10df$MAL_ID <- as.numeric(top10df$MAL_ID)
 left_join(top10df, anime[1:4], by="MAL_ID")
 ```
 
+Now let's try the algorithm out on my brother.
+```{r}
+test_list_title <- c("Akame ga Kill!", "Another", "Ansatsu Kyoushitsu", "Ansatsu Kyoushitsu 2nd Season", "Bakemonogatari",
+                    "Boku dake ga Inai Machi", "Boku no Hero Academia", "Boku no Hero Academia 2nd Season", "Boku no Hero Academia 3rd Season", "Bungou Stray Dogs",
+                    "Bungou Stray Dogs 2nd Season", "Bungou Stray Dogs 3rd Season", "Charlotte", "Chuunibyou demo Koi ga Shitai!", "Danganronpa 3: The End of Kibougamine Gakuen - Kibou-hen",
+                    "Danganronpa 3: The End of Kibougamine Gakuen - Mirai-hen", "Danganronpa 3: The End of Kibougamine Gakuen - Zetsubou-hen", "Darling in the FranXX", "Death Parade", "Dr. Stone",
+                    "Eromanga-sensei", "Fate/Zero", "Fullmetal Alchemist: Brotherhood", "Goblin Slayer", "Gokushufudou",
+                    "Great Teacher Onizuka", "Hanamonogatari", "Hotaru no Haka", "JoJo no Kimyou na Bouken (TV)", "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders",
+                    "JoJo no Kimyou na Bouken Part 3: Stardust Crusaders 2nd Season", "JoJo no Kimyou na Bouken Part 4: Diamond wa Kudakenai", "JoJo no Kimyou na Bouken Part 5: Ougon no Kaze", "Jujutsu Kaisen (TV)", "Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen",
+                    "Kaguya-sama wa Kokurasetai?: Tensai-tachi no Renai Zunousen", "Kakegurui", "KakeguruiÃ—Ã—", "Kaze no Tani no NausicaÃ¤", "Kimetsu no Yaiba",
+                    "Kimi no Na wa.", "Kiseijuu: Sei no Kakuritsu", "Kiznaiver", "Kizumonogatari I: Tekketsu-hen", "Kizumonogatari II: Nekketsu-hen",
+                    "Kizumonogatari III: Reiketsu-hen", "Kobayashi-san Chi no Maid Dragon", "Koe no Katachi", "Kono Subarashii Sekai ni Shukufuku wo!", "Kono Subarashii Sekai ni Shukufuku wo! 2",
+                    "Kono Subarashii Sekai ni Shukufuku wo!: Kurenai Densetsu", "Koyomimonogatari", "Made in Abyss", "Mahou Shoujo Madokaâ˜…Magica", "Mob Psycho 100",
+                    "Mob Psycho 100 II", "Monogatari Series: Second Season", "Naruto", "Naruto: Shippuuden", "Nekomonogatari: Kuro",
+                    "Neon Genesis Evangelion", "Neon Genesis Evangelion: The End of Evangelion", "Nisemonogatari", "No Game No Life", "One Punch Man",
+                    "Ookami Kodomo no Ame to Yuki", "Owarimonogatari", "Owarimonogatari 2nd Season", "Prison School", "Re:Zero kara Hajimeru Isekai Seikatsu",
+                    "Saiki Kusuo no Î¨-nan", "Seishun Buta Yarou wa Bunny Girl Senpai no Yume wo Minai", "Sen to Chihiro no Kamikakushi", "Shigatsu wa Kimi no Uso", "Shingeki no Kyojin",
+                    "Shingeki no Kyojin Season 2", "Shingeki no Kyojin Season 3", "Shingeki no Kyojin Season 3 Part 2", "Shingeki no Kyojin: The Final Season", "Shokugeki no Souma",
+                    "Shokugeki no Souma: Ni no Sara", "Shokugeki no Souma: San no Sara", "Shokugeki no Souma: San no Sara - Tootsuki Ressha-hen", "Steins;Gate 0", "Summer Wars",
+                    "Sword Art Online", "Sword Art Online Alternative: Gun Gale Online", "Sword Art Online II", "Toki wo Kakeru Shoujo", "Tokyo Ghoul", 
+                    "Tsukimonogatari", "Yakusoku no Neverland", "Yakusoku no Neverland 2nd Season", "Yojouhan Shinwa Taikei", "Youjo Senki",
+                    "Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e (TV)", "Zoku Owarimonogatari")
+
+test_list_score <- c(2,6,8,10,9,
+                    8,7,7,7,8,
+                    9,7,6,2,9,
+                    7,8,5,6,8,
+                    3,7,10,6,3,
+                    9,7,10,9,9,
+                    8,8,10,9,7,
+                    7,8,7,7,9,
+                    9,8,6,10,10,
+                    10,9,10,8,8,
+                    7,6,8,7,8,
+                    10,10,8,10,7,
+                    10,10,9,6,6,
+                    10,9,10,10,6,
+                    8,7,9,5,8,
+                    7,7,10,8,8,
+                    8,7,7,8,4,
+                    4,5,3,5,9,
+                    7,9,2,8,7,
+                    7, 9)
+
+testdf <- data.frame(Name = test_list_title, Score = test_list_score)
+
+test_final <- left_join(testdf, anime[1:2], by="Name") %>% select(MAL_ID, Score) %>% mutate(user_id = 123456789, rating = Score, anime_id = MAL_ID) %>% select(user_id, anime_id, rating)
+
+
+rating_complete_test <- rbind(rating_complete, test_final)
+
+ratingmat_test <- as(rating_complete_test, "realRatingMatrix")
+
+ratingmat_test <- ratingmat_test[c(rowCounts(ratingmat_test) >= 200, dim(ratingmat_test)[1]),] %>% normalize()
+
+
+
+recModel_test <- Recommender(ratingmat_test, method = "UBCF", param = list(method = "Cosine", nn = 20))
+
+
+test_list <- as(predict(recModel_test, tail(ratingmat_test, n=1), n = 200), "list")
+
+test_df <- data.frame(test_list)
+
+colnames(test_df) <- "MAL_ID"
+
+test_df$MAL_ID <- as.numeric(test_df$MAL_ID)
+
+
+left_join(test_df, anime[1:4], by="MAL_ID")[,2:4]
+
+```
+
